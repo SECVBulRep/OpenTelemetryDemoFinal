@@ -70,6 +70,7 @@ public class Program
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("FrontEnd.Api")) 
                     .AddSource("FrontEnd.Api")
                     .SetSampler(new AlwaysOnSampler())
+                    .AddSource(DiagnosticHeaders.DefaultListenerName)
                     .AddHttpClientInstrumentation()
                     .AddAspNetCoreInstrumentation();
         
