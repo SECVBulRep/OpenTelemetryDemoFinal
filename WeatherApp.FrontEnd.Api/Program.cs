@@ -1,4 +1,5 @@
 using MassTransit;
+using OpenTelemetry.Metrics;
 using Serilog;
 using WeatherApp.FrontEnd.Api.Services;
 using WeatherApp.Libs.Metrics;
@@ -43,6 +44,24 @@ public class Program
             });
         });
 
+        
+        builder.Services.AddOpenTelemetry()
+            .WithMetrics(builder =>
+            {
+                builder
+                    .AddMeter(WeatherMetrics.InstrumentSourceName)
+                    .SetExemplarFilter(ExemplarFilterType.TraceBased)
+                    .AddRuntimeInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddAspNetCoreInstrumentation();
+        
+                builder.AddOtlpExporter(otlpOptions =>
+                {
+                    otlpOptions.Endpoint = new Uri("http://localhost:4317");
+                });
+             
+            });
+        
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
