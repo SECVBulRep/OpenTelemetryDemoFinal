@@ -63,7 +63,14 @@ public class Program
                     .AddSource("BackEnd.Api")
                     .SetSampler(new AlwaysOnSampler())
                     .AddHttpClientInstrumentation()
-                    .AddAspNetCoreInstrumentation();
+                    .AddAspNetCoreInstrumentation()
+                    .AddRedisInstrumentation(redisConnection, opt =>
+                    {
+                        opt.Enrich = (activity, command) => activity.SetTag("redis.connection", "localhost:6379");
+                        opt.Enrich = (activity, command) => activity.SetTag("peer.service", "redis");
+                        opt.FlushInterval = TimeSpan.FromSeconds(1);
+                        opt.EnrichActivityWithTimingEvents = true;
+                    });
         
                 tracerProviderBuilder.AddOtlpExporter(otlpOptions =>
                 {

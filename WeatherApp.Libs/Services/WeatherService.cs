@@ -69,48 +69,55 @@ public class WeatherService
 
     public async Task<WeatherData?> GetWeatherByCityAsync(string city)
     {
-        var cachedWeatherData = await _redisDatabase.StringGetAsync(city);
-        WeatherData? result;
-
-        if (cachedWeatherData.HasValue)
+        using (var activity = new ActivitySource("BackEnd.Api").StartActivity())
         {
-            result = BsonSerializer.Deserialize<WeatherData>(cachedWeatherData.ToString());
-        }
-        else
-        {
-            var filter = Builders<WeatherData>.Filter.Eq(w => w.City, city);
-            result = await _weatherCollection.Find(filter).FirstOrDefaultAsync();
+            var cachedWeatherData = await _redisDatabase.StringGetAsync(city);
+            WeatherData? result;
 
-            if (result != null)
+            if (cachedWeatherData.HasValue)
             {
-                await _redisDatabase.StringSetAsync(city, result.ToJson(), TimeSpan.FromMinutes(30));
+                result = BsonSerializer.Deserialize<WeatherData>(cachedWeatherData.ToString());
             }
+            else
+            {
+                var filter = Builders<WeatherData>.Filter.Eq(w => w.City, city);
+                result = await _weatherCollection.Find(filter).FirstOrDefaultAsync();
+
+                if (result != null)
+                {
+                    await _redisDatabase.StringSetAsync(city, result.ToJson(), TimeSpan.FromMinutes(30));
+                }
+            }
+
+            _logger.LogInformation("weather in city {@City} is {@Result}", city, result);
+            return result;
         }
-        _logger.LogInformation("weather in city {@City} is {@Result}", city, result);
-        return result;
     }
 
 
     public async Task<List<WeatherData>?> GetWeatherInAllCitiesAsync()
     {
-        var cachedWeatherData = await _redisDatabase.StringGetAsync("all_cities");
-        List<WeatherData>? result;
-        
-        if (cachedWeatherData.HasValue)
+        using (var activity = new ActivitySource("BackEnd.Api").StartActivity())
         {
-             result = BsonSerializer.Deserialize<List<WeatherData>>(cachedWeatherData.ToString());
-        }
-        else
-        {
-            result = await _weatherCollection.Find(Builders<WeatherData>.Filter.Empty).ToListAsync();
+            var cachedWeatherData = await _redisDatabase.StringGetAsync("all_cities");
+            List<WeatherData>? result;
 
-            if (result is { Count: > 0 })
+            if (cachedWeatherData.HasValue)
             {
-                await _redisDatabase.StringSetAsync("all_cities", result.ToJson(),
-                    TimeSpan.FromMinutes(30));
+                result = BsonSerializer.Deserialize<List<WeatherData>>(cachedWeatherData.ToString());
             }
+            else
+            {
+                result = await _weatherCollection.Find(Builders<WeatherData>.Filter.Empty).ToListAsync();
+
+                if (result is { Count: > 0 })
+                {
+                    await _redisDatabase.StringSetAsync("all_cities", result.ToJson(),
+                        TimeSpan.FromMinutes(30));
+                }
+            }
+
+            return result;
         }
-        return result;
     }
 }
-
