@@ -64,6 +64,7 @@ public class Program
                     .SetSampler(new AlwaysOnSampler())
                     .AddHttpClientInstrumentation()
                     .AddAspNetCoreInstrumentation()
+                    .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources")
                     .AddRedisInstrumentation(redisConnection, opt =>
                     {
                         opt.Enrich = (activity, command) => activity.SetTag("redis.connection", "localhost:6379");
