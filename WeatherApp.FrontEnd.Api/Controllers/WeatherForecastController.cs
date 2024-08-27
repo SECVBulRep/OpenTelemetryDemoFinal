@@ -33,6 +33,10 @@ public class WeatherForecastController(
     public async Task<List<WeatherData>?> GetAllEventually(string? orderId)
     {
         metrics.SummaryRequestByCityCounter.Add(1, new KeyValuePair<string, object?>("city", "all"));
+        
+        if (!string.IsNullOrEmpty(orderId))
+            Activity.Current.SetTag("orderId", orderId);
+        
         var response =
             await client.GetResponse<GetWeatherCastForAllCitiesResponse>(new GetWeatherCastForAllCitiesRequest());
         return response.Message.Data;
