@@ -1,5 +1,8 @@
 using MassTransit;
+using MassTransit.Logging;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using WeatherApp.FrontEnd.Api.Services;
 using WeatherApp.Libs.Metrics;
@@ -60,8 +63,23 @@ public class Program
                     otlpOptions.Endpoint = new Uri("http://localhost:4317");
                 });
              
+            })
+            .WithTracing(tracerProviderBuilder =>
+            {
+                tracerProviderBuilder
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("FrontEnd.Api")) 
+                    .AddSource("FrontEnd.Api")
+                    .SetSampler(new AlwaysOnSampler())
+                    .AddHttpClientInstrumentation()
+                    .AddAspNetCoreInstrumentation();
+        
+                tracerProviderBuilder.AddOtlpExporter(otlpOptions =>
+                {
+                    otlpOptions.Endpoint = new Uri("http://localhost:4317");
+                });
             });
         
+        //  SetResourceBuilder настраивает контекстные данные, а AddSource определяет, какие трассировки будут собиратьс
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())

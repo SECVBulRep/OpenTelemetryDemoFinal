@@ -1,6 +1,8 @@
 using MassTransit;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Extensions.DiagnosticSources;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using StackExchange.Redis;
 using WeatherApp.BackEnd.Api.Consumers;
@@ -53,6 +55,22 @@ public class Program
         MongoClient mongoClient = new MongoClient(clientSettings);
         builder.Services.AddSingleton<MongoClient>(mongoClient);
 
+        builder.Services.AddOpenTelemetry()
+            .WithTracing(tracerProviderBuilder =>
+            {
+                tracerProviderBuilder
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("BackEnd.Api")) 
+                    .AddSource("BackEnd.Api")
+                    .SetSampler(new AlwaysOnSampler())
+                    .AddHttpClientInstrumentation()
+                    .AddAspNetCoreInstrumentation();
+        
+                tracerProviderBuilder.AddOtlpExporter(otlpOptions =>
+                {
+                    otlpOptions.Endpoint = new Uri("http://localhost:4317");
+                });
+            });
+        
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
