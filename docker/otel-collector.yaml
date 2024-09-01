@@ -20,6 +20,10 @@ exporters:
   loki:
     endpoint: http://loki:3100/loki/api/v1/push
     tls:
+      insecure: true  
+  otlphttp/seq:
+    endpoint: "http://seq:5341/ingest/otlp"
+    tls:
       insecure: true
     
 service:
@@ -29,7 +33,7 @@ service:
       exporters: [prometheus]
     traces:
       receivers: [ otlp ]
-      exporters: [ otlp ]
+      exporters: [ otlp, otlphttp/seq ]
     logs:
       receivers: [ otlp ]      
-      exporters: [ loki ]
+      exporters: [ loki, otlphttp/seq ]

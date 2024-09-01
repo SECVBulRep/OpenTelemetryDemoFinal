@@ -1,1 +1,7 @@
 docker/tempo-data/
+/WeatherApp.BackEnd.Api/bin
+/WeatherApp.BackEnd.Api/obj
+/WeatherApp.FrontEnd.Api/bin
+/WeatherApp.FrontEnd.Api/obj
+/WeatherApp.Libs/obj
+/WeatherApp.Libs/bin
